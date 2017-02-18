@@ -30,54 +30,16 @@ request( {
     6 - Forma de Pagamento; 7 - Digest Value da NF-e
 
     Para Situação atual (4):
-    
+
     */
     var tabNFe_infos = [];
 
     var tabNFe = $(".GeralXslt#NFe");
-    tabNFe.children().each( function( index, elem ) {
-        var infos = [];
-        getValues(elem, infos);
-        tabNFe_infos.push(infos);
-    } );
-
+    getTabInfos(tabNFe, tabNFe_infos);
+    // TODO
+    // Coletar situação atual conforme os popups
     console.log(tabNFe_infos);
-    
-    
-
-    // Informações gerais para NFe
-    // var tabNFe_general = tabNFe_infos.get(0);    
-    /*
-    Infos armazenadas em suas posicoes
-    
-    */
-    // var NFe_general_infos = [];
-    // getValues(tabNFe_general, NFe_general_infos);
-    // console.log(NFe_general_infos);                 
-    
-    // Informações de Emitente para NFe
-    // var tabNFe_emitente = tabNFe_infos.get(1);
-    /*
-    Infos
-    
-    */               
-    // var NFe_emit_infos = [];
-    // getValues(tabNFe_emitente, NFe_emit_infos);
-    // console.log(NFe_emit_infos);
-
-    // Informações destinatário para NFe
-    // var tabNFe_dest = tabNFe_infos.get(2);
-    /*
-    Infos
-   
-    */
-    // var NFe_dest_infos = [];
-    // getValues(tabNFe_dest, NFe_dest_infos);
-    // console.log()
-
-    // var tabNFe_emissao = tabNFe_infos.get(3);
-    // var tabNFe_situacao = tabNFe_infos.get(4);
-    
+      
     // Infos para tab Emitente
     var tabEmit = $(".GeralXslt#Emitente");
     var tabEmit_infos = tabEmit.children();
@@ -108,10 +70,19 @@ request( {
     var tabInfosAdd_infos = tabInfosAdd.children();
 } );
 
-var getValues = function(context, store) {
 
-    context.children[1].children.forEach( function( elem, index) {
-        var tr = elem;
+
+var getTabInfos = function( tab, store ) {
+    tab.children().each( function( index, elem ) {
+        var infos = [];
+        getContextInfos(elem, infos);
+        store.push(infos);
+    } );
+}
+
+var getContextInfos = function(context, store) {
+
+    context.children[1].children.forEach( function( tr, index) {
         
         tr.children.forEach( function( elem, index ) {
                
@@ -119,9 +90,6 @@ var getValues = function(context, store) {
                 var info = elem.children[1].children[0];
                 store.push(info.data);
             }
-                
-
         });
-
     } );
 }
