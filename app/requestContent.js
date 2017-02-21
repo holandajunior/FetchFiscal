@@ -178,12 +178,7 @@ var getCobrDuplicatas = function ( table ) {
 };
 
 var getProdutos = function ( tabProdutos ) {
-     
-     /*
-     Infos cabecario
-     0 - Numero; 1 - Descricao; 2 - Quantidade;
-     3 - Unidade comercial; 4 - Valor
-     */
+          
 
     var readTrs = function ( trs, posInfoElem ) {
         var infos = [];
@@ -225,6 +220,7 @@ var getProdutos = function ( tabProdutos ) {
     }
     
     var getInfosHeader = function ( table ) {
+        
         var infosHeader = readTrs( table.children, 0 );
         return infosHeader;
     };
@@ -236,22 +232,73 @@ var getProdutos = function ( tabProdutos ) {
         var tableGeral = tdInfos.children[0];
         /*
         Infos gerais
+        Para pos 0, tem:
         0 - Codigo do produto; 1 - Codigo NCM; 2 - Codigo CEST;
-        3 - Codigo EX da TIPI; 4 - CFOP; 5 - Outras despesas acessorias
-        4 - Valor do desconto; 5 - Valor total do frete; 6 - Valor do seguro
+        Para pos 1, tem:
+        0 - Codigo EX da TIPI; 1 - CFOP; 2 - Outras despesas acessorias
+        Para pos 2, tem:
+        0 - Valor do desconto; 1 - Valor total do frete; 2 - Valor do seguro
         */
         var infos_geral = readTrs( tableGeral.children, 1 );
 
         /*
         Infos restantes
+        0 - Indicador de Composicao do valor total da NFe;
+        Para pos 1, tem:
+        0 - Cidugi EAN Comercial; 1 - Unidade comercial;
+        2 - Quantidade comercial
+        Para pos 2, tem:
+        0 - Codigo EAN tributavel; 1 - Unidade tributavel; 2 - Quantidade tributavel
+        Para pos 3, tem:
+        0 - Valor unitario de comercializacao; 1 - Valor unitario de tributacao;
+        Para pos 4, tem:
+        0 - Numero do pedido de compra; 1 - Item do pedido de compra;
+        2 - Valor aproximado dos tributos
+        Para pos 5, tem:
+        0 - Numero da FCI;
+
+        -------------------------
+        Para pos 6, tem:
+        0 - ICMS Normal e ST (Array); 1 - Impos sobre produtos indust. (Array) ;
+        2 - Imposto de importação (Array);
+
+        Assim, para cada item da pos 6, temos
+        Para ICMS Normal e ST (0):
+        0 - Origem da mercadoria; 1 - Codigo de situação da operacao / Simples nacional;
+        1 - Aliquota aplicavel de calculo do credito; 2 -Valor de credito do ICMS;
+
+        Para Imposto sobre produtos Industrializados (1):
+        0 - Classe de enquadramento; 1- Codigo de enquadramento; 2 - Codigo do selo;
+        3 - CNPJ do Produtos; 4 - Qtd. selo; 5 - CST; 6 - Qtd total unidade padrão;
+        7 - Valor por unidade; 8 - Valor IPI; 9 - Base de calculo; 10 - Aliquota
+
+        Para Imposto de importação (2):
+        0 - Base de calculo; 1 - Despesas Aduaneiras; 2 - Imposto de importação;
+        3 - IOF;
+        ---------------------------
+        
+        Para pos 7, tem :
+        0 - PIS;
+
+        Para PIS (0):
+        0 - CST; 1 - Base de calculo; 2 - Aliquota (%); 3 - Valor do PIS
+        
+        ---------------------------
+
+        Para pos 9, tem:
+        0 - COFINS;
+
+        Para COFINS (0):
+        0 - CST; 1 - Base de calculo; 2 - Aliquota (%); 3 - Valor;
 
         */
 
         var tableInfos = tdInfos.children[2];
         
         var infos_restantes = readTrs( tableInfos.children, 1 );
-        console.log(infos_restantes);
+        infosProd.push(infos_geral, infos_restantes);
         
+        return infosProd;
     };
     
     var prods = [];
@@ -386,10 +433,96 @@ var collect = function ( accessKey) {
         ----------------------------------------------------------
         */
                 
+        
+
         // Infos para tab Produtos e Serviços
+
+        /*
+
+        * Um array de produtos é coletado. Dessa forma, cada posição do array representa um produto. Para cada produto, as regras abaixo ocorrem. *
+
+        Posições das infos:
+        0 - Infos de entrada do item - cabecario; 1 - Infos detalhadas do item
+
+        -------------------------
+        
+        Infos cabecario - item (0)
+        0 - Numero; 1 - Descricao; 2 - Quantidade;
+        3 - Unidade comercial; 4 - Valor
+
+        -------------------------
+      
+
+        Infos detalhadas do item (1)
+        0 - gerais; 1 - Mais infos
+        
+        -------------------------
+
+        Infos gerais (0):
+        Para pos 0, tem:
+        0 - Codigo do produto; 1 - Codigo NCM; 2 - Codigo CEST;
+        Para pos 1, tem:
+        0 - Codigo EX da TIPI; 1 - CFOP; 2 - Outras despesas acessorias
+        Para pos 2, tem:
+        0 - Valor do desconto; 1 - Valor total do frete; 2 - Valor do seguro
+        
+
+        Mais infos (1):
+        Para pos 0, tem:
+        0 - Indicador de Composicao do valor total da NFe;
+        Para pos 1, tem:
+        0 - Codigo EAN Comercial; 1 - Unidade comercial;
+        2 - Quantidade comercial
+        Para pos 2, tem:
+        0 - Codigo EAN tributavel; 1 - Unidade tributavel; 2 - Quantidade tributavel
+        Para pos 3, tem:
+        0 - Valor unitario de comercializacao; 1 - Valor unitario de tributacao;
+        Para pos 4, tem:
+        0 - Numero do pedido de compra; 1 - Item do pedido de compra;
+        2 - Valor aproximado dos tributos
+        Para pos 5, tem:
+        0 - Numero da FCI;
+
+        _________________________
+        Para pos 6, tem:
+        0 - ICMS Normal e ST (Array); 1 - Impos sobre produtos indust. (Array) ;
+        2 - Imposto de importação (Array);
+
+        Assim, para cada item da pos 6, temos
+        Para ICMS Normal e ST (0):
+        0 - Origem da mercadoria; 1 - Codigo de situação da operacao / Simples nacional;
+        1 - Aliquota aplicavel de calculo do credito; 2 -Valor de credito do ICMS;
+
+        Para Imposto sobre produtos Industrializados (1):
+        0 - Classe de enquadramento; 1- Codigo de enquadramento; 2 - Codigo do selo;
+        3 - CNPJ do Produtos; 4 - Qtd. selo; 5 - CST; 6 - Qtd total unidade padrão;
+        7 - Valor por unidade; 8 - Valor IPI; 9 - Base de calculo; 10 - Aliquota
+
+        Para Imposto de importação (2):
+        0 - Base de calculo; 1 - Despesas Aduaneiras; 2 - Imposto de importação;
+        3 - IOF;
+        _________________________
+        
+        Para pos 7, tem :
+        0 - PIS;
+
+        Para PIS (0):
+        0 - CST; 1 - Base de calculo; 2 - Aliquota (%); 3 - Valor do PIS
+        
+        _________________________
+
+        Para pos 9, tem:
+        0 - COFINS;
+
+        Para COFINS (0):
+        0 - CST; 1 - Base de calculo; 2 - Aliquota (%); 3 - Valor;
+        
+        */
         var tabProdServicos = $(".GeralXslt#Prod");
         var produtos = getProdutos( tabProdServicos );
-        // console.log(produtos);
+        console.log(produtos);
+        console.log("*******************");
+        console.log(produtos[0][1]);
 
         /*
         ----------------------------------------------------------
