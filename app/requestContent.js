@@ -1,6 +1,8 @@
 var request = require("request");
 var cheerio = require("cheerio");
 
+var NULL = "Null"
+
 var getContextInfos = function ( context ) {
         
     var contextInfos = [];
@@ -38,10 +40,15 @@ var getContextInfos = function ( context ) {
 var getFieldsetInfos = function ( fieldset ) {
     var infos = [];
         
-    if(fieldset.children[1] && fieldset.children[1].name == 'fieldset')
+    if(fieldset.children[1] && (fieldset.children[1].name == 'fieldset' || fieldset.children[1].name == 'div'))
         fieldset = fieldset.children[1];
 
-    var tables = fieldset.children.slice(1, fieldset.children.length);
+    var tables;
+    if(fieldset.children && fieldset.children[0].name == 'table')
+        tables = fieldset.children;
+    else
+        tables = fieldset.children.slice(1, fieldset.children.length);
+
     tables.forEach( function( table, index ) {
         
         var tableInfos = [];
@@ -56,7 +63,7 @@ var getFieldsetInfos = function ( fieldset ) {
                     if( info )
                         tableInfos.push(info.data);
                     else
-                        tableInfos.push("NULL");
+                        tableInfos.push(NULL);
                 }
             });
         } );
@@ -99,7 +106,7 @@ var getNFeEventos = function ( table ) {
                     hasInfos = true;
                 }
             } else {
-                evento_info.push("NULL");
+                evento_info.push(NULL);
             }
                             
         } );
@@ -178,23 +185,73 @@ var getProdutos = function ( tabProdutos ) {
      3 - Unidade comercial; 4 - Valor
      */
 
-    var readTrs = function ( trs ) {
+    var readTrs = function ( trs, posInfoElem ) {
         var infos = [];
-        
-        trs.forEach( function( td, index ) {
-            infos.push(td.children[0].children[0].data);
-        } );
+                
+        trs.forEach( function( tr, index ) {
+            
+            var trInfos = [];
+            
+            tr.children.forEach( function( td, index ) {
+                var firstChild = td.children[0];
+                
+                if(firstChild && firstChild.name == 'fieldset'){
+                    
+                    td.children.forEach(  function( elem, index) {
+                        if(elem.name == 'fieldset')
+                            trInfos.push(getFieldsetInfos( elem ));
+                    });
+                    
 
-        return infos;
+                } else {
+
+                    if(td.children[posInfoElem] && td.children[posInfoElem].children && td.children[posInfoElem].children.length > 0) {
+                        
+                        trInfos.push(td.children[posInfoElem].children[0].data);
+                    } else
+                        trInfos.push(NULL);        
+                }
+
+                
+            } );
+
+            infos.push(trInfos);
+        });
+        
+        if(infos.length > 1)
+            return infos;
+        else
+            return infos[0];    
     }
     
     var getInfosHeader = function ( table ) {
-        var infosHeader = readTrs( table.children[0].children );
+        var infosHeader = readTrs( table.children, 0 );
         return infosHeader;
     };
 
     var getInfosProd = function ( table ) {
         var infosProd = [];
+        var tdInfos = table.children[0].children[0]
+
+        var tableGeral = tdInfos.children[0];
+        /*
+        Infos gerais
+        0 - Codigo do produto; 1 - Codigo NCM; 2 - Codigo CEST;
+        3 - Codigo EX da TIPI; 4 - CFOP; 5 - Outras despesas acessorias
+        4 - Valor do desconto; 5 - Valor total do frete; 6 - Valor do seguro
+        */
+        var infos_geral = readTrs( tableGeral.children, 1 );
+
+        /*
+        Infos restantes
+
+        */
+
+        var tableInfos = tdInfos.children[2];
+        
+        var infos_restantes = readTrs( tableInfos.children, 1 );
+        console.log(infos_restantes);
+        
     };
     
     var prods = [];
@@ -328,12 +385,11 @@ var collect = function ( accessKey) {
                             Prod. e Servicos
         ----------------------------------------------------------
         */
-
-        // TODO
-        // Infos sobre os produtos
+                
         // Infos para tab Produtos e Serviços
         var tabProdServicos = $(".GeralXslt#Prod");
-        console.log(getProdutos( tabProdServicos ));
+        var produtos = getProdutos( tabProdServicos );
+        // console.log(produtos);
 
         /*
         ----------------------------------------------------------
