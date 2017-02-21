@@ -1,3 +1,9 @@
-var collector = require("./requestContent");
+var collector = require('./request_content');
+var stream = require('./read_file');
 
-collector("teste");
+var reader = stream();
+
+reader.on('line', function( line ) {
+    console.log(line);
+});
+

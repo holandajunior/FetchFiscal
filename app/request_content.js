@@ -153,6 +153,7 @@ var getDescricaoInfosAdd = function ( fieldset ) {
 }
 
 var getCobrDuplicatas = function ( table ) {
+
     var dups = [];
     var dups_tr = table.children;
         
@@ -322,7 +323,7 @@ var getProdutos = function ( tabProdutos ) {
 var collect = function ( accessKey) {
 
     request( {
-        uri: "http://nfe.sefaz.ce.gov.br/pages/consultaNfeXSLTParametro.jsf?efnConsult=35170223944152000148550010000005211308007076"
+        uri: "http://nfe.sefaz.ce.gov.br/pages/consultaNfeXSLTParametro.jsf?efnConsult=23170207576952000105550440000079711683210404"
     }, function( error, response, body ) {
 
         var $ = cheerio.load(body); 
@@ -622,11 +623,24 @@ var collect = function ( accessKey) {
         var tabCobr = $(".GeralXslt#Cobranca");
         var tabCobr_infos = getContextInfos(tabCobr);
                         
-        var tabCobr_duplicatas = tabCobr.children().get(0).children[3];
-        var tabCobr_duplicatas_info = getCobrDuplicatas( tabCobr_duplicatas.children[1] );
+        var tabCobr_duplicatas; 
+        tabCobr.children().get(0).children.forEach( function ( elem, index ) {
+            if(elem.name == 'fieldset'){
+                if(elem.children[0].children[0].data == 'Duplicatas') {
+                    tabCobr_duplicatas = elem;
+                    return;
+                }
+            }
+        } );
+        var tabCobr_duplicatas_info = [];
+        
+        if(tabCobr_duplicatas)
+            tabCobr_duplicatas_info = getCobrDuplicatas( tabCobr_duplicatas.children[1] );
         
         tabCobr_infos[1] = tabCobr_duplicatas_info;
-        
+        if(tabCobr_infos[0] == undefined)
+            tabCobr_infos[0] = [];
+
         console.log("\n\n");
         console.log("---------------------------------------------------------------");
         console.log("                          Cobranca                             ");
@@ -650,24 +664,24 @@ var collect = function ( accessKey) {
         Para a posição de Info. complem. (1):
         0 - Descricao
         */
-        //TODO
-        var tabInfosAdd = $(".GeralXslt#Inf");
-        var tabInfosAdd_infos = [];
-
-        var tabInfosAdd_fieldset = tabInfosAdd.children().get(0);
-        var tabInfosAdd_geral = [];
-        var tabInfosAdd_infos_complem = [];
-
-        tabInfosAdd_geral.push( getGeralInfosAdd( tabInfosAdd_fieldset ) );
-        tabInfosAdd_infos_complem.push( getDescricaoInfosAdd( tabInfosAdd_fieldset ) );
         
-        tabInfosAdd_infos.push( tabInfosAdd_geral, tabInfosAdd_infos_complem );
+        // var tabInfosAdd = $(".GeralXslt#Inf");
+        // var tabInfosAdd_infos = [];
 
-        console.log("\n\n");
-        console.log("---------------------------------------------------------------");
-        console.log("                    Informacoes adicionais                     ");
-        console.log("---------------------------------------------------------------");
-        console.log(tabInfosAdd_infos);
+        // var tabInfosAdd_fieldset = tabInfosAdd.children().get(0);
+        // var tabInfosAdd_geral = [];
+        // var tabInfosAdd_infos_complem = [];
+
+        // tabInfosAdd_geral.push( getGeralInfosAdd( tabInfosAdd_fieldset ) );
+        // tabInfosAdd_infos_complem.push( getDescricaoInfosAdd( tabInfosAdd_fieldset ) );
+        
+        // tabInfosAdd_infos.push( tabInfosAdd_geral, tabInfosAdd_infos_complem );
+
+        // console.log("\n\n");
+        // console.log("---------------------------------------------------------------");
+        // console.log("                    Informacoes adicionais                     ");
+        // console.log("---------------------------------------------------------------");
+        // console.log(tabInfosAdd_infos);
 
     } );
 };
