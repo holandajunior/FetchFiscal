@@ -1,43 +1,218 @@
 var request = require("request");
 var cheerio = require("cheerio");
 
-var getTabInfos = function ( tab ) {
- 
-    var tabInfos = [];
+var getContextInfos = function ( context ) {
+        
+    var contextInfos = [];
+    try {
 
-    tab.children().each( function( index, elem ) {
-        var infos = getContextInfos(elem);
-        tabInfos.push(infos);
-    } );
+        context.children().each( function( index, elem ) {
+            var infos = getFieldsetInfos(elem);
+            contextInfos.push(infos);
+        } );
 
-    return tabInfos;
+    } catch ( error ) {
+        if(typeof context.children === 'function'){
+
+            context[0].children.forEach( function( elem, index ) {
+                var infos = getFieldsetInfos(elem);
+                contextInfos.push(infos);
+            } );
+
+        } else {
+
+            context.children.forEach( function( elem, index ) {
+                var infos = getFieldsetInfos(elem);
+                contextInfos.push(infos);
+            } );
+
+        }
+        
+    }
+    
+
+    return contextInfos;
 };
 
-var getContextInfos = function ( context ) {
+// Faz a leitura de um fieldset completo, obtendo informações das tabelas
+var getFieldsetInfos = function ( fieldset ) {
     var infos = [];
-
-    var fieldset = context;
-    
-    if(fieldset.children[1].name == 'fieldset')
+        
+    if(fieldset.children[1] && fieldset.children[1].name == 'fieldset')
         fieldset = fieldset.children[1];
 
-    fieldset.children[1].children.forEach( function( tr, index) {
+    var tables = fieldset.children.slice(1, fieldset.children.length);
+    tables.forEach( function( table, index ) {
+        
+        var tableInfos = [];
+        
+        table.children.forEach( function( tr, index) {
             
-        tr.children.forEach( function( elem, index ) {
-            
-            if(elem.children[1]){
-                var info = elem.children[1].children[0];
+            tr.children.forEach( function( elem, index ) {
                 
-                if( info )
-                    infos.push(info.data);
-                else
-                    infos.push("NULL");
+                if(elem.children[1]){
+                    var info = elem.children[1].children[0];
+                    
+                    if( info )
+                        tableInfos.push(info.data);
+                    else
+                        tableInfos.push("NULL");
+                }
+            });
+        } );
+
+        if(tableInfos.length > 0)
+            infos.push(tableInfos);
+
+    } );
+    
+    if(infos.length > 1)
+        return infos;
+    else 
+        return infos[0];    
+
+};
+
+var getNFeEventos = function ( table ) {
+    var eventos = [];
+    var eventos_tr = table.children;
+    
+    eventos_tr = eventos_tr.slice(1, eventos_tr.length);
+    eventos_tr.forEach( function( tr, index ) {
+        /*
+          Posições e suas infos  
+          0 - Evento; 1 - Protocolo; 2 - Data autorização; 
+          3 - Data Inclusão BD; 
+          4 - Outro array com os dados especificos do evento   
+        */
+        var evento_info = [];
+        var hasInfos = false;
+
+        tr.children.forEach( function( td, index ) {
+                        
+            if( td.children[0].children[0] ) {
+                if(td.children[0].children[0].data)
+                    evento_info.push(td.children[0].children[0].data.trim());
+                else {
+                    var link = td.children[0].children[0];
+                    evento_info.push(link.children[0].data.trim());
+                    hasInfos = true;
+                }
+            } else {
+                evento_info.push("NULL");
             }
-        });
+                            
+        } );
+
+        if(hasInfos) {
+
+            /*
+            Posições das infos
+            0 - Ciencia da operacao; 1- Detalhes do evento; 2 - Autorizacao pela SEFAZ;
+
+
+            Infos para cada posição
+
+            Ciencia da operacao (0):
+            Array 0: 0 - Orgao recepcao do Evento; 1 - Ambiente; 2 - Versao
+            Array 1: 0 - Autor Evento (CNPJ / CPF); 1 Chave de acesso; 2 - Data evento
+            Array 2: 0 - Tipo de evento; 1 - Sequencial do Evento
+
+            Detalhes do evento (1):
+            0 - Descricao do evento; 1 - Versao; 2 - Justificativa
+
+            Autorizacao pela SEFAZ (2):
+            0 - Mensagem de Autorizacao; 1 - Protocolo; 2 - Data/Hora Autorizacao
+
+            */
+
+            var divInfos = tr.children[1].children[0].children[1].children[0];
+            // var infos = getContextInfos( divInfos );
+            // evento_info.push(infos);
+        }
+           
+        eventos.push(evento_info);        
     } );
 
-    return infos;
+    return eventos;        
+};
 
+var getGeralInfosAdd = function ( fieldset ) {
+    return fieldset.children[2].children[0].children[0].children[1].children[0].data;
+}
+
+var getDescricaoInfosAdd = function ( fieldset ) {
+    return fieldset.children[3].children[1].children[0].children[0].children[1].children[0].children[0].data;
+}
+
+var getCobrDuplicatas = function ( table ) {
+    var dups = [];
+    var dups_tr = table.children;
+        
+    dups_tr = dups_tr.slice(1, dups_tr.length);
+    dups_tr.forEach( function( tr, index ) {
+        /*
+          Posições e suas infos  
+          0 - Numero; 1 - Vencimento; 2 - Valor; 
+                    
+        */
+        var dups_info = [];
+        
+        tr.children.forEach( function( td, index ) {
+            
+            dups_info.push(td.children[0].children[0].data.trim());
+                                       
+        } );   
+
+        dups.push(dups_info);
+    } );
+
+    return dups;
+};
+
+var getProdutos = function ( tabProdutos ) {
+     
+     /*
+     Infos cabecario
+     0 - Numero; 1 - Descricao; 2 - Quantidade;
+     3 - Unidade comercial; 4 - Valor
+     */
+
+    var readTrs = function ( trs ) {
+        var infos = [];
+        
+        trs.forEach( function( td, index ) {
+            infos.push(td.children[0].children[0].data);
+        } );
+
+        return infos;
+    }
+    
+    var getInfosHeader = function ( table ) {
+        var infosHeader = readTrs( table.children[0].children );
+        return infosHeader;
+    };
+
+    var getInfosProd = function ( table ) {
+        var infosProd = [];
+    };
+    
+    var prods = [];
+    var divTables = tabProdutos.children().get(0).children[1];
+
+    //Retira table com infos de cabecario
+    var divTables = divTables.children.slice(1, divTables.children.length);
+
+    for(var i = 0, size = divTables.length; i < size; i+=2) {
+        var infosHeader = getInfosHeader( divTables[i] );
+        var infosProd = getInfosProd( divTables[i+1] );
+
+        prods.push( [ infosHeader, infosProd ] );
+    }
+
+    return prods;
+ 
+    
 };
 
 var collect = function ( accessKey) {
@@ -47,6 +222,13 @@ var collect = function ( accessKey) {
     }, function( error, response, body ) {
 
         var $ = cheerio.load(body); 
+        
+        /*
+        ----------------------------------------------------------
+                                NFE
+        ----------------------------------------------------------
+        */
+        
         // Infos para tab NFe
         /*
         Para cada contexto
@@ -70,14 +252,41 @@ var collect = function ( accessKey) {
         6 - Forma de Pagamento; 7 - Digest Value da NF-e
 
         Para Situação atual (4):
+        0 - Situacao atual
+        1 - Array de eventos (Olhar comentários da estrutura de infos dos eventos)
 
         */
         var tabNFe = $(".GeralXslt#NFe");
-        var tabNFe_infos = getTabInfos(tabNFe);
-        // TODO
-        // Coletar situação atual conforme os popups
+        var tabNFe_infos = getContextInfos(tabNFe);
+        
+        // Coletando situação atual na tab NFe
+        var tabNFe_situ_atual = tabNFe.children().get(4);
+             
+        var tabNFe_infos_situ_atual = [];
+       
+        // Obtém texto completo da situação atual
+        var situ_atual_temp = tabNFe_situ_atual.children[0].children[0].data;
+        // Obtém apenas a palavra que representa a situação atual
+        var situ_atual = situ_atual_temp.split(":")[1].split("(")[0].trim();
+        
+        // Adiciona info da situação atual
+        tabNFe_infos_situ_atual.push(situ_atual);
+
+        // Pega o html table que contém todos os eventos
+        var tabNFe_eventos = tabNFe_situ_atual.children[1];
+        tabNFe_infos_situ_atual.push(getNFeEventos(tabNFe_eventos));        
+        
+        // Adiciona infos da Situacao atual
+        tabNFe_infos[4] = tabNFe_infos_situ_atual;
+
         // console.log(tabNFe_infos);
-                
+
+        /*
+        ----------------------------------------------------------
+                                Emitente
+        ----------------------------------------------------------
+        */
+
         // Infos para tab Emitente
         /*
         Há apenas a posição 0 - geral
@@ -90,8 +299,15 @@ var collect = function ( accessKey) {
         14 - CNAE Fiscal; 15 - Codigo do Regime Tributario
         */
         var tabEmit = $(".GeralXslt#Emitente");
-        var tabEmit_infos = getTabInfos(tabEmit);
-                
+        // var tabEmit_infos = getContextInfos(tabEmit);
+        // console.log(tabEmit_infos);
+
+        /*
+        ----------------------------------------------------------
+                            Destinatario
+        ----------------------------------------------------------
+        */
+
         // Infos para tab Destinatario
         /*
         Há apenas a posição 0 - geral
@@ -104,14 +320,26 @@ var collect = function ( accessKey) {
 
         */
         var tabDest = $(".GeralXslt#DestRem");
-        var tabDest_infos = getTabInfos(tabDest);
+        // var tabDest_infos = getContextInfos(tabDest);
         // console.log(tabDest_infos);
+
+        /*
+        ----------------------------------------------------------
+                            Prod. e Servicos
+        ----------------------------------------------------------
+        */
 
         // TODO
         // Infos sobre os produtos
         // Infos para tab Produtos e Serviços
         var tabProdServicos = $(".GeralXslt#Prod");
-        var tabProdServicos_infos = tabProdServicos.children();
+        console.log(getProdutos( tabProdServicos ));
+
+        /*
+        ----------------------------------------------------------
+                                Totais
+        ----------------------------------------------------------
+        */
 
         // Infos para tab Totais
         /*
@@ -128,9 +356,15 @@ var collect = function ( accessKey) {
         18 - Valor total ICMS Interestadual UF Rem.
         */
         var tabTotais = $(".GeralXslt#Totais");
-        var tabTotais_infos = getTabInfos(tabTotais);
+        // var tabTotais_infos = getContextInfos(tabTotais);
         // console.log(tabTotais_infos);
         
+        /*
+        ----------------------------------------------------------
+                            Transporte
+        ----------------------------------------------------------
+        */
+
         // Infos para tab Transporte
         /*
         Para cada contexto
@@ -148,9 +382,14 @@ var collect = function ( accessKey) {
         3 - Numeração; 4 - Peso Liquido; 5 - Peso Bruto
         */
         var tabTrans = $(".GeralXslt#Transporte");
-        var tabTrans_infos = getTabInfos(tabTrans);
+        // var tabTrans_infos = getContextInfos(tabTrans);
         // console.log(tabTrans_infos);
 
+        /*
+        ----------------------------------------------------------
+                                Cobrança
+        ----------------------------------------------------------
+        */
         // Infos para tab Cobranca
         /*
         Para cada contexto
@@ -161,13 +400,24 @@ var collect = function ( accessKey) {
         2 - Valor do desconto; 3 - Valor Liquido
 
         Para posição Duplicatas (1):
-        //TODO
+        0 - Numero; 1 - Vencimento; 2 - Valor; 
         
         */
         var tabCobr = $(".GeralXslt#Cobranca");
-        // var tabCobr_infos = getTabInfos(tabCobr);
-        // console.log(tabCobr_infos);
+        // var tabCobr_infos = getContextInfos(tabCobr);
+                        
+        var tabCobr_duplicatas = tabCobr.children().get(0).children[3];
+        // var tabCobr_duplicatas_info = getCobrDuplicatas( tabCobr_duplicatas.children[1] );
         
+        // tabCobr_infos[1] = tabCobr_duplicatas_info;
+        // console.log(tabCobr_infos);
+
+        /*
+        ----------------------------------------------------------
+                        Informacoes adicionais
+        ----------------------------------------------------------
+        */
+
         // Infos para tab Informacoes adicionais
         /*
         Para cada contexto
@@ -181,7 +431,17 @@ var collect = function ( accessKey) {
         */
         //TODO
         var tabInfosAdd = $(".GeralXslt#Inf");
-        // var tabInfosAdd_infos = getTabInfos(tabInfosAdd);
+        var tabInfosAdd_infos = [];
+
+        var tabInfosAdd_fieldset = tabInfosAdd.children().get(0);
+        var tabInfosAdd_geral = [];
+        var tabInfosAdd_infos_complem = [];
+
+        tabInfosAdd_geral.push( getGeralInfosAdd( tabInfosAdd_fieldset ) );
+        tabInfosAdd_infos_complem.push( getDescricaoInfosAdd( tabInfosAdd_fieldset ) );
+        
+        tabInfosAdd_infos.push( tabInfosAdd_geral, tabInfosAdd_infos_complem );
+
         // console.log(tabInfosAdd_infos);
 
     } );
