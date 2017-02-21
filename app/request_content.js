@@ -320,14 +320,18 @@ var getProdutos = function ( tabProdutos ) {
     
 };
 
-var collect = function ( accessKey) {
+var collect = function ( accessKey ) {
 
     request( {
-        uri: "http://nfe.sefaz.ce.gov.br/pages/consultaNfeXSLTParametro.jsf?efnConsult=23170207576952000105550440000079711683210404"
+        uri: "http://nfe.sefaz.ce.gov.br/pages/consultaNfeXSLTParametro.jsf?efnConsult=" + accessKey
     }, function( error, response, body ) {
 
         var $ = cheerio.load(body); 
         
+        console.log("*********************************************");
+        console.log("Coletando " + accessKey);
+        console.log("*********************************************");
+
         /*
         ----------------------------------------------------------
                                 NFE
@@ -683,6 +687,7 @@ var collect = function ( accessKey) {
         // console.log("---------------------------------------------------------------");
         // console.log(tabInfosAdd_infos);
 
+        console.log("\n\n\n");
     } );
 };
 
