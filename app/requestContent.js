@@ -44,7 +44,7 @@ var getFieldsetInfos = function ( fieldset ) {
         fieldset = fieldset.children[1];
 
     var tables;
-    if(fieldset.children && fieldset.children[0].name == 'table')
+    if(fieldset.children && fieldset.children[0] && fieldset.children[0].name == 'table')
         tables = fieldset.children;
     else
         tables = fieldset.children.slice(1, fieldset.children.length);
@@ -383,7 +383,10 @@ var collect = function ( accessKey) {
         // Adiciona infos da Situacao atual
         tabNFe_infos[4] = tabNFe_infos_situ_atual;
 
-        // console.log(tabNFe_infos);
+        console.log("---------------------------------------------------------------");
+        console.log("                               NFe                             ");
+        console.log("---------------------------------------------------------------");
+        console.log(tabNFe_infos);
 
         /*
         ----------------------------------------------------------
@@ -403,8 +406,13 @@ var collect = function ( accessKey) {
         14 - CNAE Fiscal; 15 - Codigo do Regime Tributario
         */
         var tabEmit = $(".GeralXslt#Emitente");
-        // var tabEmit_infos = getContextInfos(tabEmit);
-        // console.log(tabEmit_infos);
+        var tabEmit_infos = getContextInfos(tabEmit);
+        
+        console.log("\n\n");
+        console.log("---------------------------------------------------------------");
+        console.log("                          Emitente                             ");
+        console.log("---------------------------------------------------------------");
+        console.log(tabEmit_infos);
 
         /*
         ----------------------------------------------------------
@@ -424,8 +432,13 @@ var collect = function ( accessKey) {
 
         */
         var tabDest = $(".GeralXslt#DestRem");
-        // var tabDest_infos = getContextInfos(tabDest);
-        // console.log(tabDest_infos);
+        var tabDest_infos = getContextInfos(tabDest);
+
+        console.log("\n\n");
+        console.log("---------------------------------------------------------------");
+        console.log("                      Destinatario                             ");
+        console.log("---------------------------------------------------------------");
+        console.log(tabDest_infos);
 
         /*
         ----------------------------------------------------------
@@ -520,9 +533,13 @@ var collect = function ( accessKey) {
         */
         var tabProdServicos = $(".GeralXslt#Prod");
         var produtos = getProdutos( tabProdServicos );
+        
+        console.log("\n\n");
+        console.log("---------------------------------------------------------------");
+        console.log("                       Prod. e Servicos                        ");
+        console.log("---------------------------------------------------------------");
         console.log(produtos);
-        console.log("*******************");
-        console.log(produtos[0][1]);
+        
 
         /*
         ----------------------------------------------------------
@@ -545,8 +562,13 @@ var collect = function ( accessKey) {
         18 - Valor total ICMS Interestadual UF Rem.
         */
         var tabTotais = $(".GeralXslt#Totais");
-        // var tabTotais_infos = getContextInfos(tabTotais);
-        // console.log(tabTotais_infos);
+        var tabTotais_infos = getContextInfos(tabTotais);
+
+        console.log("\n\n");
+        console.log("---------------------------------------------------------------");
+        console.log("                            Totais                             ");
+        console.log("---------------------------------------------------------------");
+        console.log(tabTotais_infos);
         
         /*
         ----------------------------------------------------------
@@ -571,8 +593,13 @@ var collect = function ( accessKey) {
         3 - Numeração; 4 - Peso Liquido; 5 - Peso Bruto
         */
         var tabTrans = $(".GeralXslt#Transporte");
-        // var tabTrans_infos = getContextInfos(tabTrans);
-        // console.log(tabTrans_infos);
+        var tabTrans_infos = getContextInfos(tabTrans);
+        
+        console.log("\n\n");
+        console.log("---------------------------------------------------------------");
+        console.log("                          Transporte                           ");
+        console.log("---------------------------------------------------------------");
+        console.log(tabTrans_infos);
 
         /*
         ----------------------------------------------------------
@@ -593,13 +620,18 @@ var collect = function ( accessKey) {
         
         */
         var tabCobr = $(".GeralXslt#Cobranca");
-        // var tabCobr_infos = getContextInfos(tabCobr);
+        var tabCobr_infos = getContextInfos(tabCobr);
                         
         var tabCobr_duplicatas = tabCobr.children().get(0).children[3];
-        // var tabCobr_duplicatas_info = getCobrDuplicatas( tabCobr_duplicatas.children[1] );
+        var tabCobr_duplicatas_info = getCobrDuplicatas( tabCobr_duplicatas.children[1] );
         
-        // tabCobr_infos[1] = tabCobr_duplicatas_info;
-        // console.log(tabCobr_infos);
+        tabCobr_infos[1] = tabCobr_duplicatas_info;
+        
+        console.log("\n\n");
+        console.log("---------------------------------------------------------------");
+        console.log("                          Cobranca                             ");
+        console.log("---------------------------------------------------------------");
+        console.log(tabCobr_infos);
 
         /*
         ----------------------------------------------------------
@@ -631,7 +663,11 @@ var collect = function ( accessKey) {
         
         tabInfosAdd_infos.push( tabInfosAdd_geral, tabInfosAdd_infos_complem );
 
-        // console.log(tabInfosAdd_infos);
+        console.log("\n\n");
+        console.log("---------------------------------------------------------------");
+        console.log("                    Informacoes adicionais                     ");
+        console.log("---------------------------------------------------------------");
+        console.log(tabInfosAdd_infos);
 
     } );
 };
